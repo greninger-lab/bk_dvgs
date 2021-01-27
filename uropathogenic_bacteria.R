@@ -6,8 +6,11 @@ total <- cleaned_df %>% filter(name=="root")
 domains <- cleaned_df %>% filter(rank=="D")
 
 # Grab common uropathogenic bacteria
-bacteria_df <- cleaned_df %>% filter(name == "Citrobacter" | name == "Escherichia coli" | name == "Enterobacter cloacae complex" | 
-                                       name == "Klebsiella pneumoniae" | name == "Proteus mirabilis" | name == "Providencia stuartii" | 
+bacteria_df <- cleaned_df %>% filter(name == "Citrobacter" | name == "Escherichia coli" |
+                                       name == "Enterobacter" | name == "Klebsiella" | name == "Candida" | name == "Acinetobacter baumannii" | 
+                                     #| name == "Enterobacter cloacae complex" | 
+                                      # name == "Klebsiella pneumoniae" | 
+                                       name == "Proteus mirabilis" | name == "Providencia stuartii" | 
                                        name == "speciestaphylococcus aureus" | name == "speciestaphylococcus saprophyticus" | 
                                        name == "Enterococcus faecium" | name == "Enterococcus faecalis" | name == "Pseudomonas aeruginosa group" |
                                        name == "unclassified" )#| name == "Human polyomavirus 1")
@@ -30,12 +33,12 @@ bk_jc_df_2 <- cbind(names,bk_jc_df_2)
 
 bk_jc_df_2 <- as.data.frame(bk_jc_df_2)
 df3 <- bk_jc_df_2
-df3[] <- cbind(df3[1], lapply(df3[2:13], function(x) as.numeric(as.character(x))))
+df3[] <- cbind(df3[1], lapply(df3[2:15], function(x) as.numeric(as.character(x))))
 
 cols <- colnames(df3)
-rpm_df <- data.frame(matrix(ncol=13,nrow = 0))
+rpm_df <- data.frame(matrix(ncol=15,nrow = 0))
 colnames(rpm_df) <- cols
-cols <- cols[2:13]
+cols <- cols[2:15]
 
 # Calculate rpms
 for(sample in df3$names) {
@@ -48,24 +51,28 @@ for(sample in df3$names) {
   rpm_df <- rbind(rpm_df,rpm_sample)
 }
 
-rpm_df <- rpm_df %>% select(1,3:13)
+rpm_df <- rpm_df %>% select(1,3:15)
 colnames(rpm_df)
-colnames(rpm_df) <- c("Sample","S.aureus","S.saprophyticus","Pseudomonas aeruginosa","Enterobacter cloacae","E.coli","Citrobacter","Enterococcus faecalis","Providencia stuartii","Enterococcus faecium","Klebsiella pneumoniae","Proteus mirabilis")
+colnames(rpm_df) <- c("Sample","S.aureus","Enterobacter","Citrobacter","Klebsiella","E.coli","Pseudomonas aeruginosa","Candida","Enterococcus faecalis","Acinetobacter baumannii","S. saprophyticus","Providencia stuartii","Enterococcus faecium","Proteus mirabilis")
+col_order <- c("Sample","S.aureus","S. saprophyticus","Enterobacter","Citrobacter","Klebsiella","E.coli","Pseudomonas aeruginosa","Enterococcus faecalis","Enterococcus faecium","Acinetobacter baumannii","Providencia stuartii","Proteus mirabilis","Candida")
 
 df4 <- melt(rpm_df)
-df5 <- (rpm_df)
+df5 <- (rpm_df[,col_order])
 
 df4$value <- as.numeric(as.character(df4$value))
 df4_bk <- df4 %>% filter(variable == "BK")
 
-df5$Sum <- rowSums(df5[2:12])
-df5 <- df5[order(-df5$Sum),]
 
 df6 <- df4 %>% filter(variable!="BK")
 df6$Sample <- factor(df6$Sample, levels = unique(df6$Sample[rev(order(df4_bk$value))]))
 
 # Count as uropathogenic bacteria present when any bacteria is >10 rpm
-df5$UB_present <- apply(df5[, -1], MARGIN = 1, function(x) any(x > 10))
+df5$UB_present <- apply(df5[, 2:13], MARGIN = 1, function(x) any(x > 10))
+#df5$Fungi_present <- apply(df5[,14], MARGIN = 1, function(x) any(x > 10))
+
+df5$Bacteria_Sum <- rowSums(df5[2:13])
+df5 <- df5[order(-df5$Bacteria_Sum),]
+
 
 # Plot for funsies
 ggplot(data=df6, aes(x=Sample,y=value,fill=variable)) + geom_col(width = 1) + 
@@ -75,5 +82,5 @@ ggplot(data=df6, aes(x=Sample,y=value,fill=variable)) + geom_col(width = 1) +
   theme(legend.position="right") + coord_flip()
 #theme(axis.text.x = element_text(angle=45, vjust = 1, hjust = 1, size = 7))
 
-write.csv(df5,"Uropathogenic_bacteria_table.csv",row.names=FALSE,quote=FALSE)
+write.csv(df5,"Uropathogenic_bacteria_fungus_table.csv",row.names=FALSE,quote=FALSE)
 ggsave("Uropathogenic_bacteria_BK.pdf",width=10,height=8)
