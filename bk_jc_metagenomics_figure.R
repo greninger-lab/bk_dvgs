@@ -51,7 +51,7 @@ bk_jc_df_2 <- t(bk_jc_df)
 names <- rownames(bk_jc_df_2)
 rownames(bk_jc_df_2) <- NULL
 bk_jc_df_2 <- janitor::row_to_names(bk_jc_df_2,1)
-names <- names[2:46]
+names <- names[2:47]
 names <- gsub("_.*$","",names)
 bk_jc_df_2 <- cbind(names,bk_jc_df_2)
 #colnames(bk_jc_df_2) <- c("Sample","JC","BK")
@@ -124,6 +124,14 @@ df4$Sample <- factor(df4$Sample, levels = unique(df4$Sample[rev(order(df4_bk$val
 df4$variable <- factor(df4$variable, levels = rev(c("BK","JC","Polyomaviridae","Other Viruses","Bacteria","Fungi","Viridiplantae","Human","Other Eukaryota",
                                                     "Archaea","Unclassified")))
 
+# samples with dvgs
+#7, 24, 35, 62, 121, 161, 178, 264, 265, 266, 88, 96, 282,292
+label_list = rev(c(91, 28, 183, 16, 90, 40, 200, 264, 77, 146, 289, 187, 88, 65, 76, 245, 94, 64, 96, 272, 62, 29, 292, 54, 174, 24, 265, 121, 122, 143, 7, 177, 294, 282, 86, 35, 26, 161, 280, 140, 178, 279, 34, 295, 263))
+ll <- lapply(label_list, as.character)
+which(sapply(ll, FUN=function(X) "7" %in% X))
+# samples with dvgs in order of list
+# 5,8,10,12,15,18,19,20,23,25,27,33,38
+
 ggplot(data=df4, aes(x=Sample,y=value,fill=variable)) + geom_col(width = 1) + 
   theme_classic() + ylab("RPM") + labs(fill = "Classification") + 
   #scale_fill_brewer(palette="Spectral", direction=-1, guide=guide_legend(reverse=TRUE)) + 
@@ -134,7 +142,10 @@ ggplot(data=df4, aes(x=Sample,y=value,fill=variable)) + geom_col(width = 1) +
   #scale_fill_manual(values = rev(c("indianred1","firebrick2","darkred","dodgerblue2","darkseagreen","springgreen2",
   #                             "slateblue4","springgreen4","snow3","yellow","orange")), guide=guide_legend(reverse=TRUE)) +
   #theme(legend.position = c(0.45,0.88), legend.direction="horizontal") + 
-  theme(legend.position="right") + coord_flip()
+  theme(legend.position="right") +
+  theme(axis.text.y = element_text(face=c(rep('plain',4),'bold',rep('plain',2),'bold','bold','plain','plain','bold','plain','plain','bold','plain','plain','bold','bold','bold',
+                                          'plain','plain','bold','plain','bold','plain','bold',rep('plain',5),'bold',rep('plain',4),'bold',rep('plain',10)))) + 
+  coord_flip()
  #theme(axis.text.x = element_text(angle=45, vjust = 1, hjust = 1, size = 7))
 
 ggsave("BK_JC_Barplot.pdf",width=10,height=8)
@@ -167,7 +178,7 @@ bacteria_totals <- bacteria_rows %>% dplyr::filter(bacteria_rows$rank == "D")
 bacteria_rows <- bacteria_rows %>% filter(bacteria_rows$rank == "S")
 
 cols <- grepl("1000",names(bacteria_rows))
-bacteria_rows <- bacteria_rows %>% replace(is.na(.),0) %>% mutate(sum=rowSums(.[5:60])) 
+bacteria_rows <- bacteria_rows %>% replace(is.na(.),0) %>% mutate(sum=rowSums(.[5:])) 
 bacteria_rows <- bacteria_rows %>% filter(bacteria_rows$sum >= 50)
 
 myColors <- distinctColorPalette(length(bacteria_rows$name))
